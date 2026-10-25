@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบทเรียนออนไลน์ E-Learning Platform (Modern Education)</title>
+    <!-- Google Fonts: Prompt / Noto Sans Thai -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Noto Sans Thai', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- HTML2Canvas & jsPDF for Certificate & Report Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body { font-family: 'Noto Sans Thai', sans-serif; transition: background-color 0.25s, color 0.25s; }
+        .glass-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); }
+        .dark .glass-card { background: rgba(30, 41, 59, 0.92); }
+        .sidebar-link { transition: all 0.2s ease; }
+        .sidebar-link.active { background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+        .cert-border { border: 10px double #1e3a8a; background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+
+<!-- ==================== 1. หน้าเข้าสู่ระบบ (Authentication View) ==================== -->
+<div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-900 via-blue-700 to-sky-500">
+    <div class="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 animate__animated animate__fadeInUp">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-graduation-cap text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-blue-900 dark:text-white">EduLearn Platform</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400">ระบบบทเรียนออนไลน์อัจฉริยะสำหรับสถานศึกษา</p>
+        </div>
+
+        <!-- Tabs: Login / Verify Certificate -->
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl mb-5 text-sm font-medium">
+            <button onclick="switchAuthTab('login')" id="tabBtnLogin" class="py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 shadow-sm">เข้าสู่ระบบ</button>
+            <button onclick="switchAuthTab('verify')" id="tabBtnVerify" class="py-2 rounded-lg text-slate-600 dark:text-slate-300">ตรวจสอบเกียรติบัตร</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">รหัสนักเรียน / อีเมล / ชื่อผู้ใช้</label>
+                <div class="relative">
+                    <i class="fa-solid fa-user-astronaut absolute left-3.5 top-3.5 text-slate-400"></i>
+                    <input type="text" id="loginIdentity" required placeholder="เช่น STU001 หรือ admin" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">รหัสผ่าน</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400"></i>
+                    <input type="password" id="loginPass" required placeholder="รหัสผ่าน" class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                </div>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-800 to-blue-600 hover:from-blue-900 hover:to-blue-700 text-white font-semibold shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ
+            </button>
+            <button type="button" onclick="handleGoogleLogin()" class="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition flex items-center justify-center gap-2">
+                <i class="fa-brands fa-google text-red-500"></i> เข้าสู่ระบบด้วย Google Account
+            </button>
+        </form>
+
+        <!-- Verify Certificate Form (Public) -->
+        <div id="verifyBox" class="hidden space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">หมายเลขเกียรติบัตร (Certificate ID)</label>
+                <input type="text" id="publicCertId" placeholder="เช่น CERT-2569-1001" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="button" onclick="verifyCertificatePublic()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition">
+                <i class="fa-solid fa-shield-check mr-1"></i> ตรวจสอบความถูกต้อง
+            </button>
+            <div id="publicVerifyResult"></div>
+        </div>
+
+        <!-- Quick Demo Role Switcher -->
+        <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+            <p class="text-xs text-center text-slate-400 mb-2">ทดลองเข้าใช้งานด่วน (Demo Role-Based Access)</p>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+                <button onclick="quickDemoLogin('admin', 'pen123456')" class="py-2 px-2 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-semibold border border-rose-200 dark:border-rose-800 hover:bg-rose-100">
+                    <i class="fa-solid fa-user-shield block mb-0.5"></i> Admin
+                </button>
+                <button onclick="quickDemoLogin('TCH001', '123456')" class="py-2 px-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800 hover:bg-blue-100">
+                    <i class="fa-solid fa-chalkboard-user block mb-0.5"></i> ครูผู้สอน
+                </button>
+                <button onclick="quickDemoLogin('STU001', '123456')" class="py-2 px-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100">
+                    <i class="fa-solid fa-user-graduate block mb-0.5"></i> นักเรียน
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 2. หน้าหลักของระบบ (Main Platform Layout) ==================== -->
+<div id="appLayout" class="hidden min-h-screen flex flex-col">
+    <!-- Top Navbar -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 px-4 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-900 to-blue-500 text-white flex items-center justify-center shadow">
+                <i class="fa-solid fa-book-open-reader"></i>
+            </div>
+            <div>
+                <div class="font-bold text-blue-900 dark:text-white leading-tight">EduLearn LMS</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">Modern School E-Learning</div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-4">
+            <!-- QR Check-in Button -->
+            <button onclick="openQrCheckinModal()" class="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-blue-50 dark:bg-slate-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition">
+                <i class="fa-solid fa-qrcode"></i> QR เข้าเรียน
+            </button>
+
+            <!-- Dark Mode Toggle -->
+            <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="สลับโหมดมืด/สว่าง">
+                <i id="darkModeIcon" class="fa-solid fa-moon"></i>
+            </button>
+
+            <!-- Notification Dropdown -->
+            <div class="relative">
+                <button onclick="toggleNotifPanel()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center relative hover:scale-105 transition">
+                    <i class="fa-solid fa-bell text-slate-600 dark:text-slate-200"></i>
+                    <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50">
+                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                        <span class="font-bold text-sm">การแจ้งเตือนระบบ</span>
+                        <span class="text-xs text-blue-600 cursor-pointer" onclick="markAllNotifRead()">อ่านทั้งหมด</span>
+                    </div>
+                    <div id="notifListContainer" class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700"></div>
+                </div>
+            </div>
+
+            <!-- User Profile Chip -->
+            <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200 dark:border-slate-700">
+                <img id="navUserAvatar" src="https://ui-avatars.com/api/?name=User&background=1E3A8A&color=fff" class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/30" alt="avatar">
+                <div class="hidden md:block text-left">
+                    <div id="navUserName" class="text-xs font-bold leading-none">ชื่อผู้ใช้</div>
+                    <span id="navUserRole" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-semibold inline-block mt-1">Role</span>
+                </div>
+                <button onclick="logoutSystem()" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition" title="ออกจากระบบ">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Body Split: Sidebar + Content -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Animated Sidebar -->
+        <aside id="sidebarPanel" class="fixed lg:static inset-y-0 left-0 z-20 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-4 flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <div class="space-y-1 mt-12 lg:mt-0" id="sidebarMenuContainer">
+                <!-- Populated by Role -->
+            </div>
+            <div class="p-3.5 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 text-white text-xs space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold"><i class="fa-brands fa-line text-emerald-300 mr-1"></i> LINE & Email Notify</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                </div>
+                <p class="text-blue-100 text-[11px]">ระบบเชื่อมต่อ Google Sheets & แจ้งเตือนอัตโนมัติพร้อมใช้งาน</p>
+            </div>
+        </aside>
+
+        <!-- Dynamic View Content -->
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6" id="mainViewContent">
+            <!-- Rendered dynamically -->
+        </main>
+    </div>
+</div>
+
+<!-- ==================== 3. MODALS (เพิ่ม/แก้ไขคอร์ส, บทเรียน, ข้อสอบ, QR, เกียรติบัตร) ==================== -->
+
+<!-- Course Modal -->
+<div id="courseModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl animate__animated animate__zoomIn animate__faster">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+            <h3 class="font-bold text-lg text-blue-900 dark:text-white"><i class="fa-solid fa-layer-group mr-2"></i>จัดการรายวิชา / คอร์สเรียน</h3>
+            <button onclick="closeModal('courseModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <form id="courseForm" class="space-y-3 text-sm">
+            <input type="hidden" id="fmCourseId">
+            <div>
+                <label class="font-semibold block mb-1">ชื่อรายวิชา / คอร์สเรียน *</label>
+                <input type="text" id="fmCourseName" required class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900" placeholder="เช่น วิทยาการคำนวณ และ AI เบื้องต้น">
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">คำอธิบายรายวิชา</label>
+                <textarea id="fmCourseDesc" rows="2" class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="font-semibold block mb-1">เกณฑ์คะแนนสอบผ่าน (%)</label>
+                    <input type="number" id="fmCoursePass" value="70" min="1" max="100" required class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1">จำนวนบทเรียนทั้งหมด</label>
+                    <input type="number" id="fmCourseTotalLessons" value="2" min="1" required class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                </div>
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">URL รูปปกคอร์สเรียน</label>
+                <input type="url" id="fmCourseCover" placeholder="https://images.unsplash.com/..." class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+            </div>
+            <div class="flex justify-end gap-2 pt-3">
+                <button type="button" onclick="closeModal('courseModal')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 font-medium">ยกเลิก</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">บันทึกคอร์ส</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lesson Modal -->
+<div id="lessonModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+            <h3 class="font-bold text-lg text-blue-900 dark:text-white"><i class="fa-solid fa-book-medical mr-2"></i>เพิ่ม / แก้ไขบทเรียน</h3>
+            <button onclick="closeModal('lessonModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <form id="lessonForm" class="space-y-3 text-sm">
+            <input type="hidden" id="fmLessonId">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="font-semibold block mb-1">เลือกรายวิชา (Course) *</label>
+                    <select id="fmLessonCourseId" required class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900"></select>
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1">หมวดหมู่รายวิชา (Category)</label>
+                    <input type="text" id="fmLessonCategory" placeholder="เช่น วิทยาศาสตร์ / เภสัชกรรม" required class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                </div>
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">ชื่อบทเรียน (Title) *</label>
+                <input type="text" id="fmLessonTitle" required placeholder="เช่น บทที่ 1: พื้นฐานสำคัญและการประยุกต์ใช้" class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">เนื้อหาบทเรียน (Description / HTML)</label>
+                <textarea id="fmLessonDesc" rows="3" required class="w-full px-3.5 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900" placeholder="สรุปเนื้อหาใจความสำคัญของบทเรียน..."></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="font-semibold block mb-1 text-xs"><i class="fa-brands fa-youtube text-red-500 mr-1"></i>YouTube Embed URL</label>
+                    <input type="url" id="fmLessonVideo" placeholder="https://www.youtube.com/embed/..." class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1 text-xs"><i class="fa-solid fa-file-pdf text-rose-500 mr-1"></i>ลิงก์เอกสาร PDF / Drive</label>
+                    <input type="url" id="fmLessonPdf" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1 text-xs"><i class="fa-solid fa-image text-emerald-500 mr-1"></i>URL รูปภาพประกอบ</label>
+                    <input type="url" id="fmLessonImg" placeholder="https://images.unsplash.com/..." class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900 text-xs">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3">
+                <button type="button" onclick="closeModal('lessonModal')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 font-medium">ยกเลิก</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">บันทึกบทเรียน</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quiz Question Modal -->
+<div id="quizModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+            <h3 class="font-bold text-lg text-blue-900 dark:text-white"><i class="fa-solid fa-circle-question mr-2"></i>เพิ่ม / แก้ไขข้อสอบปรนัย 4 ตัวเลือก</h3>
+            <button onclick="closeModal('quizModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <form id="quizFormModal" class="space-y-3 text-sm">
+            <input type="hidden" id="fmQuizId">
+            <div>
+                <label class="font-semibold block mb-1">รายวิชา (Course) *</label>
+                <select id="fmQuizCourseId" required class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900"></select>
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">คำถาม (Question) *</label>
+                <textarea id="fmQuizQuestion" rows="2" required class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="fmChoiceA" required placeholder="ตัวเลือก A" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                <input type="text" id="fmChoiceB" required placeholder="ตัวเลือก B" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                <input type="text" id="fmChoiceC" required placeholder="ตัวเลือก C" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                <input type="text" id="fmChoiceD" required placeholder="ตัวเลือก D" class="px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="font-semibold block mb-1">เฉลย (Correct Answer)</label>
+                    <select id="fmQuizCorrect" class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                        <option value="A">ตัวเลือก A</option>
+                        <option value="B">ตัวเลือก B</option>
+                        <option value="C">ตัวเลือก C</option>
+                        <option value="D">ตัวเลือก D</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="font-semibold block mb-1">คะแนน (Score)</label>
+                    <input type="number" id="fmQuizScore" value="10" min="1" required class="w-full px-3 py-2 rounded-xl border dark:border-slate-700 dark:bg-slate-900">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3">
+                <button type="button" onclick="closeModal('quizModal')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 font-medium">ยกเลิก</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">บันทึกข้อสอบ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Certificate Preview & PDF Export Modal -->
+<div id="certPreviewModal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-4xl w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg text-blue-900 dark:text-white"><i class="fa-solid fa-award text-amber-500 mr-2"></i>เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate with QR Verify)</h3>
+            <button onclick="closeModal('certPreviewModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <!-- Printable Certificate Area -->
+        <div id="certificateRenderBox" class="cert-border rounded-2xl p-6 sm:p-10 text-center text-slate-800 relative shadow-inner mx-auto" style="max-width: 820px;">
+            <div class="flex justify-between items-start mb-2">
+                <div class="text-left text-xs text-slate-500">
+                    <div>รหัสเกียรติบัตร: <strong id="certViewId" class="text-blue-900">CERT-2569-1001</strong></div>
+                    <div>สถานะ: <span class="text-emerald-600 font-bold">ตรวจสอบแล้ว (Verified)</span></div>
+                </div>
+                <img src="https://cdn-icons-png.flaticon.com/512/3429/3429149.png" class="w-14 h-14 mx-auto" alt="Logo" crossorigin="anonymous">
+                <div class="text-right">
+                    <img id="certViewQr" src="" alt="QR Verify" class="w-16 h-16 border p-1 bg-white rounded-lg inline-block" crossorigin="anonymous">
+                    <div class="text-[10px] text-slate-400 mt-0.5">สแกนเพื่อตรวจสอบ</div>
+                </div>
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-900 tracking-wide">โรงเรียนนวัตกรรมการศึกษาดิจิทัล (EduLearn Academy)</h2>
+            <p class="text-sm text-slate-600 mt-1">ขอมอบเกียรติบัตรฉบับนี้ไว้เพื่อแสดงว่า</p>
+
+            <div id="certViewStudentName" class="text-2xl sm:text-4xl font-bold text-blue-700 my-4 py-2 border-b-2 border-blue-200 inline-block px-8">
+                นางสาวมณี เรียนดี
+            </div>
+
+            <p class="text-sm text-slate-600">ได้ผ่านการเรียนและวัดผลประเมินผลออนไลน์ในรายวิชา</p>
+            <h3 id="certViewCourseName" class="text-xl sm:text-2xl font-bold text-slate-800 mt-1 mb-2">ความรู้พื้นฐานเรื่องการใช้ยาและสุขภาวะ</h3>
+            <p class="text-sm font-semibold text-emerald-700">คะแนนสอบที่ได้: <span id="certViewScore">95%</span> (ผ่านเกณฑ์มาตรฐาน)</p>
+            <p class="text-xs text-slate-500 mt-2">ให้ไว้ ณ วันที่ <span id="certViewDate">26 ตุลาคม 2569</span></p>
+
+            <div class="mt-8 flex justify-around items-end pt-4">
+                <div class="text-center">
+                    <div class="font-serif italic text-lg text-blue-900">Somsak Innov.</div>
+                    <div class="w-36 border-t border-slate-400 mx-auto mt-1 pt-1 text-xs font-semibold">อ.สมศักดิ์ นวัตกรรม</div>
+                    <div class="text-[11px] text-slate-500">ครูผู้สอนประจำรายวิชา</div>
+                </div>
+                <div class="text-center">
+                    <div class="font-serif italic text-lg text-blue-900">Dr. Wichai Director</div>
+                    <div class="w-36 border-t border-slate-400 mx-auto mt-1 pt-1 text-xs font-semibold">ดร.วิชัย พัฒนาศึกษา</div>
+                    <div class="text-[11px] text-slate-500">ผู้อำนวยการสถานศึกษา</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-3 mt-6">
+            <button onclick="downloadCertAsPDF()" class="px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm flex items-center gap-2 shadow">
+                <i class="fa-solid fa-file-pdf"></i> ดาวน์โหลด PDF
+            </button>
+            <button onclick="downloadCertAsPNG()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center gap-2 shadow">
+                <i class="fa-solid fa-image"></i> บันทึกรูปภาพ (PNG)
+            </button>
+            <button onclick="shareCertToLine()" class="px-5 py-2.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white font-semibold text-sm flex items-center gap-2 shadow">
+                <i class="fa-brands fa-line text-lg"></i> แชร์ผ่าน LINE & ส่งอีเมล
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Classroom Check-in Modal -->
+<div id="qrCheckinModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl">
+        <h3 class="font-bold text-lg text-blue-900 dark:text-white mb-1"><i class="fa-solid fa-qrcode mr-2 text-blue-600"></i>QR Code เช็คชื่อเข้าเรียน</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">ให้นักเรียนสแกนผ่านมือถือเพื่อเข้าสู่บทเรียนและเช็คชื่ออัตโนมัติ</p>
+        <div class="p-4 bg-white rounded-2xl border inline-block shadow-sm">
+            <img id="classroomQrImg" src="" alt="QR Check-in" class="w-48 h-48 mx-auto">
+        </div>
+        <div class="mt-3 text-xs text-slate-500">รหัสอ้างอิงผู้เรียน: <strong id="qrStudentRef" class="text-blue-600"></strong></div>
+        <div class="mt-5 flex gap-2">
+            <button onclick="simulateQrAttendanceCheck()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">
+                <i class="fa-solid fa-camera mr-1"></i> จำลองการสแกนเช็คชื่อ
+            </button>
+            <button onclick="closeModal('qrCheckinModal')" class="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-semibold">ปิด</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * ============================================================================
+ * MVC CONTROLLER & HYBRID STORAGE ENGINE
+ * - รองรับ Google Apps Script (google.script.run / Fetch API)
+ * - มี In-Memory + LocalStorage Demo Database ตาม Schema ทั้ง 8 ตารางครบถ้วน
+ * ============================================================================
+ */
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzW7yF6LDdKP0TDE97xM_b0F_ibY-wxWEXdOpbHxL02dj-XFmesBESPnzVsBB6vAL11/exec";
+
+const initialDatabase = {
+    Users: [
+        { UserID: "ADM001", FullName: "ดร.วิชัย ผู้ดูแลระบบ", Email: "admin", Role: "Admin", Password: "pen123456", Class: "ผู้บริหาร", ProfileImage: "https://ui-avatars.com/api/?name=Admin+Wichai&background=be123c&color=fff", Status: "Active", LastLogin: "26/10/2569 08:30" },
+        { UserID: "TCH001", FullName: "อ.สมศักดิ์ นวัตกรรม", Email: "teacher@school.ac.th", Role: "Teacher", Password: "123456", Class: "หมวดวิทยาศาสตร์-สุขภาพ", ProfileImage: "https://ui-avatars.com/api/?name=Somsak+T&background=1d4ed8&color=fff", Status: "Active", LastLogin: "26/10/2569 09:00" },
+        { UserID: "STU001", FullName: "นางสาวมณี เรียนดี", Email: "manee@school.ac.th", Role: "Student", Password: "123456", Class: "ม.6/1", ProfileImage: "https://ui-avatars.com/api/?name=Manee+R&background=047857&color=fff", Status: "Active", LastLogin: "26/10/2569 09:15" },
+        { UserID: "STU002", FullName: "นายปิติ มุ่งมั่น", Email: "piti@school.ac.th", Role: "Student", Password: "123456", Class: "ม.6/1", ProfileImage: "https://ui-avatars.com/api/?name=Piti+M&background=0284c7&color=fff", Status: "Active", LastLogin: "26/10/2569 09:20" },
+        { UserID: "STU003", FullName: "ด.ญ.ชูใจ ใฝ่รู้", Email: "chujai@school.ac.th", Role: "Student", Password: "123456", Class: "ม.6/2", ProfileImage: "https://ui-avatars.com/api/?name=Chujai+F&background=7c3aed&color=fff", Status: "Active", LastLogin: "26/10/2569 09:25" }
+    ],
+    Courses: [
+        { CourseID: "CRS001", CourseName: "ความรู้พื้นฐานเรื่องการใช้ยาอย่างปลอดภัย", Description: "เรียนรู้หลักการใช้ยาอย่างสมเหตุผล การอ่านฉลากยา และการป้องกันอันตรายจากยา", Teacher: "อ.สมศักดิ์ นวัตกรรม", CoverImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80", PassScore: 70, TotalLessons: 2, CreateDate: "20/10/2569", Status: "Active" },
+        { CourseID: "CRS002", CourseName: "วิทยาการคำนวณ และ AI เพื่อการศึกษา", Description: "ปูพื้นฐานการคิดเชิงคำนวณ การเขียนโปรแกรมเบื้องต้น และการใช้ AI อย่างสร้างสรรค์", Teacher: "อ.สมศักดิ์ นวัตกรรม", CoverImage: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80", PassScore: 75, TotalLessons: 2, CreateDate: "22/10/2569", Status: "Active" },
+        { CourseID: "CRS003", CourseName: "ภาษาอังกฤษเพื่อการสื่อสารยุคดิจิทัล", Description: "ฝึกทักษะการฟัง-พูด-อ่าน-เขียนภาษาอังกฤษสำหรับนักเรียนระดับมัธยมและอาชีวศึกษา", Teacher: "อ.สมศักดิ์ นวัตกรรม", CoverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80", PassScore: 70, TotalLessons: 1, CreateDate: "24/10/2569", Status: "Active" }
+    ],
+    Lessons: [
+        { LessonID: "LES001", CourseID: "CRS001", Title: "บทที่ 1: หลัก 5 ถ. ในการใช้ยาอย่างปลอดภัย", Description: "การใช้ยาที่ถูกต้องประกอบด้วย ถูกโรค ถูกคน ถูกขนาด ถูกวิธี และถูกเวลา รวมถึงห้ามนำยาของผู้อื่นมารับประทานโดยเด็ดขาด", VideoURL: "https://www.youtube.com/embed/ba7JN419_6k", PDFURL: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", ImageURL: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&q=80", Category: "เภสัชกรรมและสุขภาพ", Teacher: "อ.สมศักดิ์ นวัตกรรม", CreateDate: "20/10/2569", Status: "Active" },
+        { LessonID: "LES002", CourseID: "CRS001", Title: "บทที่ 2: การอ่านฉลากยาและข้อควรระวังยาปฏิชีวนะ", Description: "ตรวจสอบชื่อยา วันหมดอายุ วิธีรับประทานก่อนอาหาร/หลังอาหาร และความแตกต่างระหว่างยาแก้อักเสบกับยาฆ่าเชื้อแบคทีเรีย", VideoURL: "https://www.youtube.com/embed/ba7JN419_6k", PDFURL: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", ImageURL: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80", Category: "เภสัชกรรมและสุขภาพ", Teacher: "อ.สมศักดิ์ นวัตกรรม", CreateDate: "21/10/2569", Status: "Active" },
+        { LessonID: "LES003", CourseID: "CRS002", Title: "บทที่ 1: แนวคิดเชิงคำนวณ (Computational Thinking)", Description: "การแยกส่วนประกอบของปัญหา (Decomposition) การหารูปแบบ (Pattern Recognition) และการคิดเชิงนามธรรม (Abstraction)", VideoURL: "https://www.youtube.com/embed/ba7JN419_6k", PDFURL: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", ImageURL: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80", Category: "เทคโนโลยีสารสนเทศ", Teacher: "อ.สมศักดิ์ นวัตกรรม", CreateDate: "22/10/2569", Status: "Active" },
+        { LessonID: "LES004", CourseID: "CRS002", Title: "บทที่ 2: การเขียน Prompt สั่งงาน AI อย่างมีประสิทธิภาพ", Description: "เทคนิคการกำหนดบริบท (Context) บทบาท (Role) และรูปแบบผลลัพธ์เพื่อให้ AI ช่วยสรุปบทเรียนและสร้างชิ้นงาน", VideoURL: "https://www.youtube.com/embed/ba7JN419_6k", PDFURL: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", ImageURL: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&q=80", Category: "เทคโนโลยีสารสนเทศ", Teacher: "อ.สมศักดิ์ นวัตกรรม", CreateDate: "23/10/2569", Status: "Active" },
+        { LessonID: "LES005", CourseID: "CRS003", Title: "บทที่ 1: Everyday English Conversation", Description: "บทสนทนาภาษาอังกฤษในชีวิตประจำวัน การแนะนำตัว และการสื่อสารในห้องเรียนนานาชาติ", VideoURL: "https://www.youtube.com/embed/ba7JN419_6k", PDFURL: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", ImageURL: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&q=80", Category: "ภาษาต่างประเทศ", Teacher: "อ.สมศักดิ์ นวัตกรรม", CreateDate: "24/10/2569", Status: "Active" }
+    ],
+    Progress: [
+        { ProgressID: "PRG001", StudentID: "STU001", CourseID: "CRS001", LessonID: "LES001", Status: "Completed", TimeSpent: 18, LastAccess: "25/10/2569 14:20", CompleteDate: "25/10/2569" },
+        { ProgressID: "PRG002", StudentID: "STU001", CourseID: "CRS001", LessonID: "LES002", Status: "Completed", TimeSpent: 22, LastAccess: "25/10/2569 15:00", CompleteDate: "25/10/2569" },
+        { ProgressID: "PRG003", StudentID: "STU002", CourseID: "CRS001", LessonID: "LES001", Status: "Completed", TimeSpent: 15, LastAccess: "25/10/2569 16:10", CompleteDate: "25/10/2569" }
+    ],
+    Quiz: [
+        { QuizID: "QZ001", CourseID: "CRS001", Question: "ยาพาราเซตามอล (Paracetamol) มีสรรพคุณหลักตรงกับข้อใด?", ChoiceA: "ลดไข้และบรรเทาอาการปวด", ChoiceB: "ฆ่าเชื้อแบคทีเรียในลำคอ", ChoiceC: "ลดกรดและเคลือบกระเพาะอาหาร", ChoiceD: "ขยายหลอดลมแก้หอบหืด", CorrectAnswer: "A", Score: 10 },
+        { QuizID: "QZ002", CourseID: "CRS001", Question: "เมื่อได้รับยาปฏิชีวนะ (ยาฆ่าเชื้อ) ควรปฏิบัติอย่างไรจึงจะถูกต้องและปลอดภัยที่สุด?", ChoiceA: "หยุดรับประทานทันทีเมื่ออาการดีขึ้น", ChoiceB: "รับประทานติดต่อกันจนครบตามที่แพทย์หรือเภสัชกรกำหนด", ChoiceC: "แบ่งยาให้เพื่อนที่มีอาการคล้ายกัน", ChoiceD: "เพิ่มขนาดยาเป็น 2 เท่าเพื่อให้หายเร็วขึ้น", CorrectAnswer: "B", Score: 10 },
+        { QuizID: "QZ003", CourseID: "CRS001", Question: "ยาก่อนอาหาร ควรรับประทานก่อนมื้ออาหารประมาณกี่นาที?", ChoiceA: "หลังอาหารทันที", ChoiceB: "พร้อมอาหารคำแรก", ChoiceC: "ก่อนอาหารประมาณ 30 - 60 นาที", ChoiceD: "ก่อนนอนเท่านั้น", CorrectAnswer: "C", Score: 10 },
+        { QuizID: "QZ004", CourseID: "CRS002", Question: "ข้อใดคือองค์ประกอบของแนวคิดเชิงคำนวณ (Computational Thinking)?", ChoiceA: "การแยกส่วนประกอบและการหารูปแบบของปัญหา", ChoiceB: "การท่องจำโค้ดทั้งหมดโดยไม่ใช้ตรรกะ", ChoiceC: "การซื้อคอมพิวเตอร์ราคาแพง", ChoiceD: "การคัดลอกข้อมูลจากอินเทอร์เน็ต", CorrectAnswer: "A", Score: 10 },
+        { QuizID: "QZ005", CourseID: "CRS002", Question: "คำสั่งหรือข้อความที่เราป้อนให้ AI ประมวลผลเรียกว่าอะไร?", ChoiceA: " Firewall", ChoiceB: "Prompt", ChoiceC: "Router", ChoiceD: "Spreadsheet", CorrectAnswer: "B", Score: 10 }
+    ],
+    Scores: [
+        { ScoreID: "SCR001", StudentID: "STU001", CourseID: "CRS001", Score: 30, Total: 30, Percent: 100, SubmitDate: "25/10/2569 15:30" },
+        { ScoreID: "SCR002", StudentID: "STU002", CourseID: "CRS001", Score: 20, Total: 30, Percent: 67, SubmitDate: "25/10/2569 17:00" },
+        { ScoreID: "SCR003", StudentID: "STU003", CourseID: "CRS002", Score: 20, Total: 20, Percent: 100, SubmitDate: "26/10/2569 09:10" }
+    ],
+    Certificates: [
+        { CertificateID: "CERT-2569-1001", StudentID: "STU001", FullName: "นางสาวมณี เรียนดี", CourseName: "ความรู้พื้นฐานเรื่องการใช้ยาอย่างปลอดภัย", Score: 100, PDFURL: "#", VerifyURL: "https://edulearn.school.ac.th/verify?id=CERT-2569-1001", IssueDate: "25/10/2569", Status: "Verified" },
+        { CertificateID: "CERT-2569-1002", StudentID: "STU003", FullName: "ด.ญ.ชูใจ ใฝ่รู้", CourseName: "วิทยาการคำนวณ และ AI เพื่อการศึกษา", Score: 100, PDFURL: "#", VerifyURL: "https://edulearn.school.ac.th/verify?id=CERT-2569-1002", IssueDate: "26/10/2569", Status: "Verified" }
+    ],
+    Notifications: [
+        { NotificationID: "NTF001", UserID: "ALL", Message: "📢 เปิดคอร์สใหม่! วิทยาการคำนวณ และ AI เพื่อการศึกษา เข้าเรียนได้แล้ววันนี้", Type: "Course", Status: "Unread", CreateDate: "26/10/2569 08:00" },
+        { NotificationID: "NTF002", UserID: "STU001", Message: "🎉 ยินดีด้วย! คุณสอบผ่านได้ 100% และได้รับเกียรติบัตร CERT-2569-1001", Type: "Certificate", Status: "Unread", CreateDate: "25/10/2569 15:31" }
+    ]
+};
+
+let db = JSON.parse(localStorage.getItem('edulearn_db_v2')) || initialDatabase;
+let currentUser = null;
+let currentView = 'dashboard';
+let activeLearningSession = { courseId: null, lessonId: null, timerInterval: null, secondsElapsed: 0 };
+let activeQuizTimer = null;
+
+function saveDB() {
+    localStorage.setItem('edulearn_db_v2', JSON.stringify(db));
+}
+
+function sanitizeHTML(str) {
+    return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+function getNowThai() {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()+543} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ==================== INITIALIZATION & AUTHENTICATION ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const savedSession = sessionStorage.getItem('edulearn_session_user');
+    if (savedSession) {
+        currentUser = JSON.parse(savedSession);
+        launchPlatform();
+    }
+});
+
+function switchAuthTab(tab) {
+    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('verifyBox').classList.toggle('hidden', tab !== 'verify');
+    document.getElementById('tabBtnLogin').className = tab === 'login'
+        ? 'py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 shadow-sm'
+        : 'py-2 rounded-lg text-slate-600 dark:text-slate-300';
+    document.getElementById('tabBtnVerify').className = tab === 'verify'
+        ? 'py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 shadow-sm'
+        : 'py-2 rounded-lg text-slate-600 dark:text-slate-300';
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const identity = document.getElementById('loginIdentity').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    authenticateUser(identity, pass);
+});
+
+function quickDemoLogin(identity, pass) {
+    document.getElementById('loginIdentity').value = identity;
+    document.getElementById('loginPass').value = pass;
+    authenticateUser(identity, pass);
+}
+
+function authenticateUser(identity, pass) {
+    const user = db.Users.find(u =>
+        (u.UserID.toLowerCase() === identity.toLowerCase() || u.Email.toLowerCase() === identity.toLowerCase()) &&
+        String(u.Password) === String(pass)
+    );
+    if (!user) {
+        Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: 'รหัสประจำตัว/อีเมล หรือรหัสผ่านไม่ถูกต้อง', confirmButtonColor: '#1d4ed8' });
+        return;
+    }
+    user.LastLogin = getNowThai();
+    saveDB();
+    currentUser = user;
+    sessionStorage.setItem('edulearn_session_user', JSON.stringify(user));
+    Swal.fire({ icon: 'success', title: `ยินดีต้อนรับ ${user.FullName}`, text: `สิทธิ์การใช้งาน: ${user.Role}`, timer: 1300, showConfirmButton: false });
+    launchPlatform();
+}
+
+function handleGoogleLogin() {
+    Swal.fire({
+        title: 'เลือกบัญชี Google ของสถานศึกษา',
+        input: 'select',
+        inputOptions: {
+            'STU001': 'manee@school.ac.th (นักเรียน - ม.6/1)',
+            'TCH001': 'teacher@school.ac.th (ครูผู้สอน)',
+            'ADM001': 'admin@school.ac.th (ผู้ดูแลระบบ)'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'ดำเนินการต่อ',
+        confirmButtonColor: '#1d4ed8'
+    }).then(res => {
+        if (res.isConfirmed && res.value) {
+            const u = db.Users.find(x => x.UserID === res.value);
+            if (u) authenticateUser(u.UserID, u.Password);
+        }
+    });
+}
+
+function logoutSystem() {
+    stopLearningTimer();
+    sessionStorage.removeItem('edulearn_session_user');
+    currentUser = null;
+    document.getElementById('appLayout').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+}
+
+function verifyCertificatePublic() {
+    const cid = document.getElementById('publicCertId').value.trim().toUpperCase();
+    const cert = db.Certificates.find(c => c.CertificateID.toUpperCase() === cid);
+    const holder = document.getElementById('publicVerifyResult');
+    if (!cert) {
+        holder.innerHTML = `<div class="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200"><i class="fa-solid fa-circle-xmark mr-1"></i> ไม่พบหมายเลขเกียรติบัตรนี้ในฐานข้อมูล</div>`;
+        return;
+    }
+    holder.innerHTML = `
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 text-xs space-y-1">
+            <div class="font-bold text-emerald-700 dark:text-emerald-300 text-sm"><i class="fa-solid fa-circle-check mr-1"></i> เอกสารเกียรติบัตรถูกต้อง (Verified)</div>
+            <div><strong>ชื่อผู้เรียน:</strong> ${sanitizeHTML(cert.FullName)} (${cert.StudentID})</div>
+            <div><strong>หลักสูตร:</strong> ${sanitizeHTML(cert.CourseName)}</div>
+            <div><strong>คะแนนที่ได้:</strong> ${cert.Score}% | <strong>วันที่ออก:</strong> ${cert.IssueDate}</div>
+        </div>
+    `;
+}
+
+// ==================== PLATFORM SHELL & NAVIGATION ====================
+function launchPlatform() {
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('appLayout').classList.remove('hidden');
+    document.getElementById('navUserName').textContent = currentUser.FullName;
+    document.getElementById('navUserRole').textContent = `${currentUser.Role} (${currentUser.Class})`;
+    document.getElementById('navUserAvatar').src = currentUser.ProfileImage;
+
+    renderSidebarMenu();
+    renderNotifications();
+    switchView('dashboard');
+}
+
+function renderSidebarMenu() {
+    const items = [
+        { id: 'dashboard', icon: 'fa-chart-pie', label: 'แดชบอร์ด (Dashboard)', roles: ['Admin', 'Teacher', 'Student'] },
+        { id: 'classroom', icon: 'fa-laptop-file', label: 'ห้องเรียนออนไลน์ (Learn)', roles: ['Admin', 'Teacher', 'Student'] },
+        { id: 'quizCenter', icon: 'fa-file-signature', label: 'แบบทดสอบออนไลน์ (Quiz)', roles: ['Admin', 'Teacher', 'Student'] },
+        { id: 'certificates', icon: 'fa-award', label: 'เกียรติบัตร & ตรวจสอบ', roles: ['Admin', 'Teacher', 'Student'] },
+        { id: 'leaderboard', icon: 'fa-trophy', label: 'จัดอันดับคะแนนสูงสุด', roles: ['Admin', 'Teacher', 'Student'] },
+        { id: 'manageLessons', icon: 'fa-folder-plus', label: 'จัดการคอร์ส & บทเรียน', roles: ['Admin', 'Teacher'] },
+        { id: 'analyticsReport', icon: 'fa-chart-line', label: 'ติดตามผลการเรียน & รายงาน', roles: ['Admin', 'Teacher'] },
+        { id: 'systemArchitecture', icon: 'fa-code-branch', label: 'โครงสร้างโค้ด GAS & คู่มือ', roles: ['Admin', 'Teacher', 'Student'] }
+    ];
+
+    const menuEl = document.getElementById('sidebarMenuContainer');
+    menuEl.innerHTML = items
+        .filter(item => item.roles.includes(currentUser.Role))
+        .map(item => `
+            <button onclick="switchView('${item.id}')" id="navItem_${item.id}" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700">
+                <i class="fa-solid ${item.icon} w-5 text-center"></i>
+                <span>${item.label}</span>
+            </button>
+        `).join('');
+}
+
+function switchView(viewId) {
+    stopLearningTimer();
+    currentView = viewId;
+    document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+    const activeBtn = document.getElementById(`navItem_${viewId}`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Close mobile sidebar
+    document.getElementById('sidebarPanel').classList.add('-translate-x-full');
+
+    const container = document.getElementById('mainViewContent');
+    if (viewId === 'dashboard') renderDashboardView(container);
+    else if (viewId === 'classroom') renderClassroomView(container);
+    else if (viewId === 'quizCenter') renderQuizCenterView(container);
+    else if (viewId === 'certificates') renderCertificatesView(container);
+    else if (viewId === 'leaderboard') renderLeaderboardView(container);
+    else if (viewId === 'manageLessons') renderManageLessonsView(container);
+    else if (viewId === 'analyticsReport') renderAnalyticsReportView(container);
+    else if (viewId === 'systemArchitecture') renderArchitectureGuideView(container);
+}
+
+// ==================== VIEW 1: DASHBOARD ====================
+function renderDashboardView(container) {
+    const totalCourses = db.Courses.length;
+    const totalLessons = db.Lessons.length;
+    const totalStudents = db.Users.filter(u => u.Role === 'Student').length;
+    const myProgressCount = db.Progress.filter(p => p.StudentID === currentUser.UserID && p.Status === 'Completed').length;
+    const overallProgressPct = totalLessons > 0 ? Math.min(100, Math.round((myProgressCount / totalLessons) * 100)) : 0;
+
+    const myScores = db.Scores.filter(s => s.StudentID === currentUser.UserID);
+    const latestScore = myScores.length > 0 ? `${myScores[myScores.length - 1].Percent}%` : 'รอทำแบบทดสอบ';
+
+    // Resume Learning lookup
+    const lastProg = db.Progress.filter(p => p.StudentID === currentUser.UserID).slice(-1)[0];
+    const resumeLesson = lastProg ? db.Lessons.find(l => l.LessonID === lastProg.LessonID) : db.Lessons[0];
+
+    container.innerHTML = `
+        <!-- Welcome Banner -->
+        <div class="rounded-3xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 text-white p-6 sm:p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate__animated animate__fadeIn">
+            <div class="space-y-2">
+                <span class="px-3 py-1 rounded-full bg-white/20 text-xs font-semibold backdrop-blur">📢 ประกาศล่าสุด: ยินดีต้อนรับสู่ภาคเรียนดิจิทัล 2569</span>
+                <h2 class="text-2xl sm:text-3xl font-bold">สวัสดีคุณ ${sanitizeHTML(currentUser.FullName)} 👋</h2>
+                <p class="text-blue-100 text-sm">ระบบบันทึกความก้าวหน้าการเรียนอัตโนมัติ เรียนครบพร้อมสอบรับเกียรติบัตรทันที</p>
+            </div>
+            ${resumeLesson ? `
+            <button onclick="openCoursePlayer('${resumeLesson.CourseID}', '${resumeLesson.LessonID}')" class="px-5 py-3 rounded-2xl bg-white text-blue-900 font-bold text-sm shadow-lg hover:scale-105 transition flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-circle-play text-blue-600 text-lg"></i> เรียนต่อจากเดิม: ${sanitizeHTML(resumeLesson.Title.substring(0, 24))}...
+            </button>` : ''}
+        </div>
+
+        <!-- 4 KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-500">บทเรียนทั้งหมด</div>
+                    <div class="text-2xl font-bold text-blue-900 dark:text-white mt-1">${totalLessons} บท (${totalCourses} วิชา)</div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-book-open"></i></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-500">ผู้เรียนในระบบ</div>
+                    <div class="text-2xl font-bold text-emerald-600 mt-1">${totalStudents} คน</div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center text-xl"><i class="fa-solid fa-users"></i></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-500">คะแนนสอบล่าสุด</div>
+                    <div class="text-2xl font-bold text-amber-500 mt-1">${latestScore}</div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-500 flex items-center justify-center text-xl"><i class="fa-solid fa-star"></i></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <div class="flex justify-between text-xs mb-2">
+                    <span class="text-slate-500">ความคืบหน้าการเรียนรวม</span>
+                    <span class="font-bold text-blue-600">${overallProgressPct}%</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-600 to-sky-400 rounded-full transition-all duration-500" style="width:${overallProgressPct}%"></div>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-2">เรียนจบแล้ว ${myProgressCount} จาก ${totalLessons} บทเรียน</div>
+            </div>
+        </div>
+
+        <!-- Charts & Mini Leaderboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-chart-column mr-2 text-blue-600"></i>สถิติคะแนนเฉลี่ยและการเข้าเรียนรายวิชา</h3>
+                    <span class="text-xs text-slate-400">อัปเดตเรียลไทม์</span>
+                </div>
+                <canvas id="dashboardChart" height="125"></canvas>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-bold text-blue-900 dark:text-white mb-4"><i class="fa-solid fa-crown text-amber-400 mr-2"></i>Top Leaderboard</h3>
+                    <div class="space-y-3" id="miniLeaderboard"></div>
+                </div>
+                <button onclick="switchView('leaderboard')" class="mt-4 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-semibold hover:bg-blue-50 dark:hover:bg-slate-600 transition">
+                    ดูอันดับคะแนนทั้งหมด <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Render Mini Leaderboard
+    const topScores = [...db.Scores].sort((a, b) => b.Percent - a.Percent).slice(0, 4);
+    document.getElementById('miniLeaderboard').innerHTML = topScores.map((s, idx) => {
+        const stu = db.Users.find(u => u.UserID === s.StudentID) || { FullName: s.StudentID, Class: '-' };
+        const crs = db.Courses.find(c => c.CourseID === s.CourseID) || { CourseName: s.CourseID };
+        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+        return `
+            <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg font-bold">${medal}</span>
+                    <div>
+                        <div class="text-xs font-bold">${sanitizeHTML(stu.FullName)}</div>
+                        <div class="text-[11px] text-slate-400 truncate max-w-[150px]">${sanitizeHTML(crs.CourseName)}</div>
+                    </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold">${s.Percent}%</span>
+            </div>
+        `;
+    }).join('');
+
+    // Initialize Chart.js
+    const ctx = document.getElementById('dashboardChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: db.Courses.map(c => c.CourseName.substring(0, 22) + '...'),
+                datasets: [
+                    {
+                        label: 'คะแนนเฉลี่ยผู้เรียน (%)',
+                        data: db.Courses.map(c => {
+                            const list = db.Scores.filter(s => s.CourseID === c.CourseID);
+                            return list.length ? Math.round(list.reduce((a, b) => a + b.Percent, 0) / list.length) : 75;
+                        }),
+                        backgroundColor: '#2563eb',
+                        borderRadius: 8
+                    },
+                    {
+                        label: 'เกณฑ์ผ่านขั้นต่ำ (%)',
+                        data: db.Courses.map(c => c.PassScore),
+                        backgroundColor: '#93c5fd',
+                        borderRadius: 8
+                    }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+    }
+}
+
+// ==================== VIEW 2: ONLINE CLASSROOM & RESUME LEARNING ====================
+function renderClassroomView(container, filterCat = 'ALL', searchTxt = '') {
+    const categories = ['ALL', ...new Set(db.Lessons.map(l => l.Category))];
+    const filteredLessons = db.Lessons.filter(l => {
+        const matchCat = filterCat === 'ALL' || l.Category === filterCat;
+        const matchTxt = l.Title.toLowerCase().includes(searchTxt.toLowerCase()) || l.Description.toLowerCase().includes(searchTxt.toLowerCase());
+        return matchCat && matchTxt;
+    });
+
+    container.innerHTML = `
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-laptop-file mr-2 text-blue-600"></i>คอร์สเรียนและบทเรียนออนไลน์</h2>
+                <p class="text-xs text-slate-500">เลือกคอร์สหรือบทเรียนเพื่อเข้าชมวิดีโอ ดาวน์โหลดเอกสาร PDF และบันทึกเวลาเรียนอัตโนมัติ</p>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                <input type="text" id="searchLessonBox" value="${sanitizeHTML(searchTxt)}" oninput="filterClassroomLessons()" placeholder="ค้นหาบทเรียน..." class="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-xs outline-none">
+                <select id="filterCategorySelect" onchange="filterClassroomLessons()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-xs">
+                    ${categories.map(cat => `<option value="${cat}" ${cat === filterCat ? 'selected' : ''}>${cat === 'ALL' ? 'ทุกหมวดหมู่รายวิชา' : cat}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            ${db.Courses.map(course => {
+                const courseLessons = db.Lessons.filter(l => l.CourseID === course.CourseID);
+                const doneCount = courseLessons.filter(l => db.Progress.some(p => p.StudentID === currentUser.UserID && p.LessonID === l.LessonID && p.Status === 'Completed')).length;
+                const pct = courseLessons.length ? Math.round((doneCount / courseLessons.length) * 100) : 0;
+                const firstLessonId = courseLessons[0]?.LessonID || '';
+                return `
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between hover:shadow-xl transition">
+                        <div>
+                            <div class="h-40 bg-slate-200 relative">
+                                <img src="${course.CoverImage}" class="w-full h-full object-cover" alt="${sanitizeHTML(course.CourseName)}">
+                                <span class="absolute top-3 right-3 px-3 py-1 rounded-full bg-blue-900/80 text-white text-[11px] font-semibold backdrop-blur">เกณฑ์ผ่าน ${course.PassScore}%</span>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-bold text-base text-blue-900 dark:text-white mb-1">${sanitizeHTML(course.CourseName)}</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">${sanitizeHTML(course.Description)}</p>
+                                <div class="text-xs text-slate-500 flex justify-between mb-1">
+                                    <span><i class="fa-solid fa-chalkboard-user mr-1"></i>${sanitizeHTML(course.Teacher)}</span>
+                                    <span class="font-bold text-blue-600">${pct}% (${doneCount}/${courseLessons.length} บท)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500" style="width:${pct}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 pt-0 flex gap-2">
+                            <button onclick="openCoursePlayer('${course.CourseID}', '${firstLessonId}')" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">
+                                <i class="fa-solid fa-play mr-1"></i> เข้าเรียน (${courseLessons.length} บท)
+                            </button>
+                            <button onclick="startCourseQuiz('${course.CourseID}')" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition" title="ทำแบบทดสอบ">
+                                <i class="fa-solid fa-pen-to-square"></i> สอบ
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+
+        <!-- Filtered Lessons List -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+            <h3 class="font-bold text-base mb-4"><i class="fa-solid fa-list-check mr-2 text-blue-600"></i>สารบัญบทเรียนทั้งหมด (${filteredLessons.length} รายการ)</h3>
+            <div class="divide-y divide-slate-100 dark:divide-slate-700">
+                ${filteredLessons.map(l => {
+                    const isDone = db.Progress.some(p => p.StudentID === currentUser.UserID && p.LessonID === l.LessonID && p.Status === 'Completed');
+                    return `
+                        <div class="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-50 text-blue-600'} flex items-center justify-center shrink-0 mt-0.5">
+                                    <i class="fa-solid ${isDone ? 'fa-check' : 'fa-book-open'}"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-sm">${sanitizeHTML(l.Title)}</div>
+                                    <div class="text-xs text-slate-400">หมวดหมู่: ${sanitizeHTML(l.Category)} | ผู้สอน: ${sanitizeHTML(l.Teacher)}</div>
+                                </div>
+                            </div>
+                            <button onclick="openCoursePlayer('${l.CourseID}', '${l.LessonID}')" class="px-4 py-2 rounded-xl ${isDone ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-blue-600 text-white'} text-xs font-semibold self-start sm:self-center">
+                                ${isDone ? '<i class="fa-solid fa-rotate-right mr-1"></i> ทบทวนบทเรียน' : '<i class="fa-solid fa-play mr-1"></i> เริ่มเรียน'}
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function filterClassroomLessons() {
+    const txt = document.getElementById('searchLessonBox').value;
+    const cat = document.getElementById('filterCategorySelect').value;
+    renderClassroomView(document.getElementById('mainViewContent'), cat, txt);
+}
+
+// ==================== INTERACTIVE LESSON PLAYER + TIME TRACKER ====================
+function openCoursePlayer(courseId, lessonId) {
+    stopLearningTimer();
+    const course = db.Courses.find(c => c.CourseID === courseId);
+    const courseLessons = db.Lessons.filter(l => l.CourseID === courseId);
+    const currentLesson = courseLessons.find(l => l.LessonID === lessonId) || courseLessons[0];
+
+    if (!currentLesson) {
+        Swal.fire('ยังไม่มีบทเรียน', 'รายวิชานี้ยังไม่มีบทเรียนในระบบ', 'info');
+        return;
+    }
+
+    activeLearningSession = { courseId, lessonId: currentLesson.LessonID, timerInterval: null, secondsElapsed: 0 };
+
+    const progRecord = db.Progress.find(p => p.StudentID === currentUser.UserID && p.LessonID === currentLesson.LessonID);
+    const prevMinutes = progRecord ? progRecord.TimeSpent : 0;
+    const isCompleted = progRecord && progRecord.Status === 'Completed';
+
+    const container = document.getElementById('mainViewContent');
+    container.innerHTML = `
+        <div class="flex flex-wrap justify-between items-center gap-2">
+            <button onclick="switchView('classroom')" class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                <i class="fa-solid fa-arrow-left mr-1"></i> กลับหน้ารวมรายวิชา
+            </button>
+            <div class="flex items-center gap-3 bg-blue-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-blue-200 dark:border-slate-700 text-xs">
+                <i class="fa-solid fa-stopwatch text-blue-600 animate-pulse"></i>
+                <span>เวลาเรียนสะสมบทนี้: <strong id="liveTimerLabel" class="text-blue-700 dark:text-blue-300">${prevMinutes} นาที 00 วินาที</strong></span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Video & Content Viewer -->
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-5">
+                <div class="flex justify-between items-start gap-2">
+                    <div>
+                        <span class="text-xs font-bold text-blue-600 uppercase">${sanitizeHTML(course.CourseName)}</span>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-0.5">${sanitizeHTML(currentLesson.Title)}</h2>
+                    </div>
+                    <span id="lessonStatusBadge" class="px-3 py-1 rounded-full text-xs font-bold ${isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                        ${isCompleted ? 'เรียนจบแล้ว' : 'กำลังเรียน'}
+                    </span>
+                </div>
+
+                <!-- Video Embed -->
+                ${currentLesson.VideoURL ? `
+                <div class="aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow">
+                    <iframe src="${currentLesson.VideoURL}" class="w-full h-full" allowfullscreen></iframe>
+                </div>` : ''}
+
+                <!-- Image & Text Content -->
+                <div class="prose dark:prose-invert max-w-none text-sm leading-relaxed space-y-3">
+                    <p>${sanitizeHTML(currentLesson.Description)}</p>
+                    ${currentLesson.ImageURL ? `<img src="${currentLesson.ImageURL}" class="rounded-2xl max-h-72 object-cover w-full" alt="Lesson Visual">` : ''}
+                </div>
+
+                <!-- Attachments & Complete Button -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-wrap justify-between items-center gap-3">
+                    <div class="flex gap-2">
+                        ${currentLesson.PDFURL ? `
+                        <a href="${currentLesson.PDFURL}" target="_blank" class="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-file-pdf"></i> ดาวน์โหลดเอกสาร PDF
+                        </a>` : ''}
+                    </div>
+                    <button onclick="markCurrentLessonComplete('${course.CourseID}', '${currentLesson.LessonID}')" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 transition flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i> กดยืนยัน “เรียนจบแล้ว”
+                    </button>
+                </div>
+            </div>
+
+            <!-- Course Playlist Sidebar -->
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-bold text-sm mb-3"><i class="fa-solid fa-list-ol mr-2 text-blue-600"></i>ลำดับบทเรียนในรายวิชานี้</h3>
+                    <div class="space-y-2">
+                        ${courseLessons.map((item, idx) => {
+                            const done = db.Progress.some(p => p.StudentID === currentUser.UserID && p.LessonID === item.LessonID && p.Status === 'Completed');
+                            const active = item.LessonID === currentLesson.LessonID;
+                            return `
+                                <button onclick="openCoursePlayer('${course.CourseID}', '${item.LessonID}')" class="w-full p-3 rounded-2xl text-left text-xs flex items-center justify-between transition ${active ? 'bg-blue-600 text-white font-bold' : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-blue-50'}">
+                                    <span class="truncate pr-2">${idx + 1}. ${sanitizeHTML(item.Title)}</span>
+                                    <i class="fa-solid ${done ? 'fa-circle-check text-emerald-400' : 'fa-circle-play opacity-60'}"></i>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 rounded-2xl bg-blue-50 dark:bg-slate-700/60 text-center space-y-2">
+                    <div class="text-xs font-bold text-blue-900 dark:text-white">พร้อมวัดผลความรู้หรือยัง?</div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-300">เมื่อเรียนครบทุกบทแล้ว สามารถเข้าทำแบบทดสอบเพื่อรับเกียรติบัตรอัตโนมัติ</p>
+                    <button onclick="startCourseQuiz('${course.CourseID}')" class="w-full py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold">
+                        <i class="fa-solid fa-bolt mr-1"></i> เข้าสู่แบบทดสอบรายวิชา
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Start Real-time Attendance & TimeSpent Counter
+    activeLearningSession.timerInterval = setInterval(() => {
+        activeLearningSession.secondsElapsed++;
+        const addMin = Math.floor(activeLearningSession.secondsElapsed / 60);
+        const remSec = activeLearningSession.secondsElapsed % 60;
+        const lbl = document.getElementById('liveTimerLabel');
+        if (lbl) lbl.textContent = `${prevMinutes + addMin} นาที ${String(remSec).padStart(2, '0')} วินาที`;
+    }, 1000);
+}
+
+function stopLearningTimer() {
+    if (activeLearningSession.timerInterval) {
+        clearInterval(activeLearningSession.timerInterval);
+        activeLearningSession.timerInterval = null;
+    }
+}
+
+function markCurrentLessonComplete(courseId, lessonId) {
+    const addedMinutes = Math.max(1, Math.ceil(activeLearningSession.secondsElapsed / 60));
+    let rec = db.Progress.find(p => p.StudentID === currentUser.UserID && p.LessonID === lessonId);
+    if (rec) {
+        rec.Status = 'Completed';
+        rec.TimeSpent = (Number(rec.TimeSpent) || 0) + addedMinutes;
+        rec.LastAccess = getNowThai();
+        rec.CompleteDate = getNowThai().split(' ')[0];
+    } else {
+        db.Progress.push({
+            ProgressID: 'PRG' + Date.now(),
+            StudentID: currentUser.UserID,
+            CourseID: courseId,
+            LessonID: lessonId,
+            Status: 'Completed',
+            TimeSpent: addedMinutes,
+            LastAccess: getNowThai(),
+            CompleteDate: getNowThai().split(' ')[0]
+        });
+    }
+    saveDB();
+    Swal.fire({
+        icon: 'success',
+        title: 'บันทึกความคืบหน้าสำเร็จ!',
+        text: `ระบบบันทึกเวลาเรียนเพิ่ม ${addedMinutes} นาที และทำเครื่องหมายเรียนจบบทนี้แล้ว`,
+        confirmButtonColor: '#059669'
+    }).then(() => openCoursePlayer(courseId, lessonId));
+}
+
+// ==================== VIEW 3: QUIZ SYSTEM (RANDOM QUESTIONS & CHOICES + TIMER) ====================
+function renderQuizCenterView(container) {
+    container.innerHTML = `
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-file-signature mr-2 text-blue-600"></i>ระบบแบบทดสอบออนไลน์ (Smart Quiz)</h2>
+                <p class="text-xs text-slate-500">สุ่มลำดับข้อสอบและตัวเลือกอัตโนมัติ มีจับเวลา และตรวจให้คะแนนพร้อมเฉลยทันที</p>
+            </div>
+            ${currentUser.Role !== 'Student' ? `
+            <button onclick="openQuizModal()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">
+                <i class="fa-solid fa-plus mr-1"></i> เพิ่มข้อสอบใหม่
+            </button>` : ''}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            ${db.Courses.map(c => {
+                const qList = db.Quiz.filter(q => q.CourseID === c.CourseID);
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
+                        <div>
+                            <span class="px-3 py-1 rounded-full bg-blue-50 dark:bg-slate-700 text-blue-700 dark:text-blue-300 text-xs font-bold">จำนวน ${qList.length} ข้อ</span>
+                            <h3 class="font-bold text-base mt-3">${sanitizeHTML(c.CourseName)}</h3>
+                            <p class="text-xs text-slate-500 mt-1">เกณฑ์ผ่านขั้นต่ำ: ${c.PassScore}% | สุ่มข้อสอบ & จับเวลาอัตโนมัติ</p>
+                        </div>
+                        <button onclick="startCourseQuiz('${c.CourseID}')" class="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 text-white text-xs font-bold shadow">
+                            <i class="fa-solid fa-stopwatch mr-1"></i> เริ่มทำแบบทดสอบ
+                        </button>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
+function startCourseQuiz(courseId) {
+    const course = db.Courses.find(c => c.CourseID === courseId);
+    const rawQuestions = db.Quiz.filter(q => q.CourseID === courseId);
+    if (!rawQuestions.length) {
+        Swal.fire('ยังไม่มีข้อสอบ', 'รายวิชานี้ยังไม่ได้เพิ่มข้อสอบในระบบ', 'warning');
+        return;
+    }
+
+    // Randomize Questions & Choices
+    const randomizedQuestions = shuffleArray(rawQuestions).map(q => {
+        const choices = shuffleArray([
+            { key: 'A', text: q.ChoiceA },
+            { key: 'B', text: q.ChoiceB },
+            { key: 'C', text: q.ChoiceC },
+            { key: 'D', text: q.ChoiceD }
+        ]);
+        return { ...q, shuffledChoices: choices };
+    });
+
+    let remainingSeconds = randomizedQuestions.length * 60; // 1 min per question
+    const container = document.getElementById('mainViewContent');
+
+    container.innerHTML = `
+        <div class="max-w-3xl mx-auto space-y-5">
+            <div class="bg-blue-900 text-white p-5 rounded-3xl flex justify-between items-center shadow-lg sticky top-20 z-10">
+                <div>
+                    <div class="text-xs text-blue-200">แบบทดสอบวัดผลรายวิชา (Random Mode)</div>
+                    <h3 class="font-bold text-base">${sanitizeHTML(course.CourseName)}</h3>
+                </div>
+                <div class="px-4 py-2 rounded-2xl bg-white/15 font-mono font-bold text-sm">
+                    <i class="fa-solid fa-clock mr-1 text-amber-300"></i> <span id="quizCountdown">05:00</span>
+                </div>
+            </div>
+
+            <form id="activeQuizForm" class="space-y-4">
+                ${randomizedQuestions.map((q, idx) => `
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                        <div class="font-bold text-sm mb-3">ข้อที่ ${idx + 1}. ${sanitizeHTML(q.Question)} <span class="text-xs text-blue-600">(${q.Score} คะแนน)</span></div>
+                        <div class="space-y-2">
+                            ${q.shuffledChoices.map(ch => `
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer text-xs">
+                                    <input type="radio" name="q_${q.QuizID}" value="${ch.key}" required class="text-blue-600">
+                                    <span>${sanitizeHTML(ch.text)}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+                <button type="submit" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg">
+                    <i class="fa-solid fa-paper-plane mr-1"></i> ส่งกระดาษคำตอบและตรวจคะแนนทันที
+                </button>
+            </form>
+            <div id="quizAnswerReviewBox"></div>
+        </div>
+    `;
+
+    if (activeQuizTimer) clearInterval(activeQuizTimer);
+    activeQuizTimer = setInterval(() => {
+        remainingSeconds--;
+        const m = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+        const s = String(remainingSeconds % 60).padStart(2, '0');
+        const el = document.getElementById('quizCountdown');
+        if (el) el.textContent = `${m}:${s}`;
+        if (remainingSeconds <= 0) {
+            clearInterval(activeQuizTimer);
+            document.getElementById('activeQuizForm')?.requestSubmit();
+        }
+    }, 1000);
+
+    document.getElementById('activeQuizForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        clearInterval(activeQuizTimer);
+
+        let earned = 0, total = 0;
+        const reviewHtml = randomizedQuestions.map((q, idx) => {
+            total += Number(q.Score);
+            const selected = document.querySelector(`input[name="q_${q.QuizID}"]:checked`)?.value || '-';
+            const isCorrect = selected === q.CorrectAnswer;
+            if (isCorrect) earned += Number(q.Score);
+            const correctText = q['Choice' + q.CorrectAnswer];
+            return `
+                <div class="p-4 rounded-2xl border text-xs ${isCorrect ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40' : 'bg-rose-50 border-rose-200 dark:bg-rose-950/40'}">
+                    <div class="font-bold">${idx + 1}. ${sanitizeHTML(q.Question)}</div>
+                    <div class="mt-1">คำตอบของคุณ: <strong>${selected}</strong> | เฉลยที่ถูกต้อง: <strong class="text-emerald-700 dark:text-emerald-300">${q.CorrectAnswer} (${sanitizeHTML(correctText)})</strong></div>
+                </div>
+            `;
+        }).join('');
+
+        const pct = Math.round((earned / total) * 100);
+        const passed = pct >= course.PassScore;
+
+        db.Scores.push({
+            ScoreID: 'SCR' + Date.now(),
+            StudentID: currentUser.UserID,
+            CourseID: course.CourseID,
+            Score: earned,
+            Total: total,
+            Percent: pct,
+            SubmitDate: getNowThai()
+        });
+
+        // Auto-generate Certificate if Passed
+        let certGenerated = null;
+        if (passed) {
+            certGenerated = db.Certificates.find(c => c.StudentID === currentUser.UserID && c.CourseName === course.CourseName);
+            if (!certGenerated) {
+                const newCertId = `CERT-2569-${1000 + db.Certificates.length + 1}`;
+                certGenerated = {
+                    CertificateID: newCertId,
+                    StudentID: currentUser.UserID,
+                    FullName: currentUser.FullName,
+                    CourseName: course.CourseName,
+                    Score: pct,
+                    PDFURL: '#',
+                    VerifyURL: `https://edulearn.school.ac.th/verify?id=${newCertId}`,
+                    IssueDate: getNowThai().split(' ')[0],
+                    Status: 'Verified'
+                };
+                db.Certificates.push(certGenerated);
+                pushNotification(currentUser.UserID, `🎓 ยินดีด้วย! คุณสอบผ่านวิชา "${course.CourseName}" (${pct}%) ได้รับเกียรติบัตร ${newCertId}`, 'Certificate');
+            }
+        }
+        saveDB();
+        renderNotifications();
+
+        document.getElementById('quizAnswerReviewBox').innerHTML = `
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 space-y-4">
+                <div class="text-center">
+                    <div class="text-3xl font-extrabold ${passed ? 'text-emerald-600' : 'text-rose-600'}">คะแนนของคุณ: ${earned}/${total} (${pct}%)</div>
+                    <p class="text-xs text-slate-500 mt-1">${passed ? '🎉 ผ่านเกณฑ์มาตรฐาน! ระบบออกเกียรติบัตรให้คุณเรียบร้อยแล้ว' : 'ยังไม่ผ่านเกณฑ์ขั้นต่ำ สามารถทบทวนบทเรียนและสอบใหม่ได้'}</p>
+                    ${certGenerated ? `<button onclick="previewCertificate('${certGenerated.CertificateID}')" class="mt-3 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow"><i class="fa-solid fa-award mr-1"></i> เปิดดูและดาวน์โหลดเกียรติบัตร</button>` : ''}
+                </div>
+                <h4 class="font-bold text-sm border-t pt-4">เฉลยละเอียดรายข้อ:</h4>
+                <div class="space-y-2">${reviewHtml}</div>
+            </div>
+        `;
+        Swal.fire({
+            icon: passed ? 'success' : 'info',
+            title: passed ? `สอบผ่าน! ได้คะแนน ${pct}%` : `ได้คะแนน ${pct}%`,
+            text: passed ? 'ระบบสร้างเกียรติบัตรพร้อม QR Verify และส่งแจ้งเตือน LINE แล้ว' : 'ดูเฉลยด้านล่างเพื่อทบทวนความรู้ได้เลยครับ'
+        });
+    });
+}
+
+// ==================== VIEW 4: CERTIFICATES & QR VERIFY ====================
+function renderCertificatesView(container) {
+    const myCerts = currentUser.Role === 'Student'
+        ? db.Certificates.filter(c => c.StudentID === currentUser.UserID)
+        : db.Certificates;
+
+    container.innerHTML = `
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-award text-amber-500 mr-2"></i>คลังเกียรติบัตรอัตโนมัติ & ระบบตรวจสอบ QR</h2>
+                <p class="text-xs text-slate-500">ดาวน์โหลดเกียรติบัตร PDF/PNG พร้อม QR Code สำหรับตรวจสอบความถูกต้องออนไลน์</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            ${myCerts.map(cert => `
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">${cert.CertificateID}</span>
+                        <h3 class="font-bold text-base text-blue-900 dark:text-white">${sanitizeHTML(cert.CourseName)}</h3>
+                        <div class="text-xs text-slate-500">ผู้รับ: <strong>${sanitizeHTML(cert.FullName)}</strong> | คะแนน: <strong>${cert.Score}%</strong></div>
+                        <div class="text-[11px] text-slate-400">วันที่ออกเอกสาร: ${cert.IssueDate}</div>
+                    </div>
+                    <button onclick="previewCertificate('${cert.CertificateID}')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 shadow">
+                        <i class="fa-solid fa-eye mr-1"></i> เปิดเกียรติบัตร
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function previewCertificate(certId) {
+    const cert = db.Certificates.find(c => c.CertificateID === certId);
+    if (!cert) return;
+    document.getElementById('certViewId').textContent = cert.CertificateID;
+    document.getElementById('certViewStudentName').textContent = cert.FullName;
+    document.getElementById('certViewCourseName').textContent = cert.CourseName;
+    document.getElementById('certViewScore').textContent = `${cert.Score}%`;
+    document.getElementById('certViewDate').textContent = cert.IssueDate;
+    document.getElementById('certViewQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(cert.VerifyURL)}`;
+    document.getElementById('certPreviewModal').classList.remove('hidden');
+}
+
+function downloadCertAsPNG() {
+    const box = document.getElementById('certificateRenderBox');
+    html2canvas(box, { useCORS: true, scale: 2 }).then(canvas => {
+        const a = document.createElement('a');
+        a.download = `${document.getElementById('certViewId').textContent}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+    });
+}
+
+function downloadCertAsPDF() {
+    const box = document.getElementById('certificateRenderBox');
+    html2canvas(box, { useCORS: true, scale: 2 }).then(canvas => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 10, 15, 277, 180);
+        pdf.save(`${document.getElementById('certViewId').textContent}.pdf`);
+    });
+}
+
+function shareCertToLine() {
+    const certId = document.getElementById('certViewId').textContent;
+    Swal.fire({
+        icon: 'success',
+        title: 'ส่งเกียรติบัตรเข้า LINE & Email สำเร็จ!',
+        text: `ระบบจำลองการส่งไฟล์ PDF (${certId}) ไปยังอีเมลและ LINE Notify ของผู้เรียนเรียบร้อยแล้ว`,
+        confirmButtonColor: '#06C755'
+    });
+}
+
+// ==================== VIEW 5: LEADERBOARD ====================
+function renderLeaderboardView(container) {
+    const ranked = [...db.Scores].sort((a, b) => b.Percent - a.Percent);
+    container.innerHTML = `
+        <div>
+            <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>จัดอันดับผู้เรียนยอดเยี่ยม (Top Leaderboard)</h2>
+            <p class="text-xs text-slate-500">ตารางจัดอันดับผู้เรียนที่ได้คะแนนแบบทดสอบสูงสุดพร้อมสถิติรายวิชา</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
+            <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200">
+                    <tr>
+                        <th class="p-4">อันดับ</th>
+                        <th class="p-4">ชื่อ-นามสกุล</th>
+                        <th class="p-4">ชั้นเรียน</th>
+                        <th class="p-4">รายวิชา</th>
+                        <th class="p-4 text-center">คะแนนสุทธิ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                    ${ranked.map((s, idx) => {
+                        const u = db.Users.find(x => x.UserID === s.StudentID) || { FullName: s.StudentID, Class: '-' };
+                        const c = db.Courses.find(x => x.CourseID === s.CourseID) || { CourseName: s.CourseID };
+                        return `
+                            <tr class="hover:bg-blue-50/40 dark:hover:bg-slate-700/40 transition">
+                                <td class="p-4 font-bold text-base">${idx === 0 ? '🥇 1' : idx === 1 ? '🥈 2' : idx === 2 ? '🥉 3' : idx + 1}</td>
+                                <td class="p-4 font-bold text-blue-900 dark:text-white">${sanitizeHTML(u.FullName)}</td>
+                                <td class="p-4">${sanitizeHTML(u.Class)}</td>
+                                <td class="p-4">${sanitizeHTML(c.CourseName)}</td>
+                                <td class="p-4 text-center"><span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">${s.Score}/${s.Total} (${s.Percent}%)</span></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// ==================== VIEW 6: LESSON & COURSE MANAGEMENT (ADMIN/TEACHER) ====================
+function renderManageLessonsView(container) {
+    container.innerHTML = `
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-folder-plus mr-2 text-blue-600"></i>ระบบจัดการคอร์สเรียน บทเรียน และข้อสอบ</h2>
+                <p class="text-xs text-slate-500">สำหรับผู้ดูแลระบบและครูผู้สอน สามารถเพิ่ม/แก้ไข/ลบรายวิชา วิดีโอ YouTube เอกสาร PDF และข้อสอบ</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openCourseModal()" class="px-4 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-900 text-white text-xs font-semibold">
+                    <i class="fa-solid fa-plus mr-1"></i> สร้างคอร์สเรียนใหม่
+                </button>
+                <button onclick="openLessonModal()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">
+                    <i class="fa-solid fa-book-medical mr-1"></i> เพิ่มบทเรียนใหม่
+                </button>
+                <button onclick="openQuizModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
+                    <i class="fa-solid fa-circle-question mr-1"></i> เพิ่มข้อสอบ
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+            <h3 class="font-bold text-base mb-4">ตารางจัดการบทเรียนทั้งหมด (${db.Lessons.length} บทเรียน)</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100 dark:bg-slate-700">
+                        <tr>
+                            <th class="p-3">รหัส</th>
+                            <th class="p-3">ชื่อบทเรียน</th>
+                            <th class="p-3">หมวดหมู่</th>
+                            <th class="p-3">สื่อการสอน</th>
+                            <th class="p-3 text-right">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                        ${db.Lessons.map(l => `
+                            <tr>
+                                <td class="p-3 font-mono font-bold">${l.LessonID}</td>
+                                <td class="p-3 font-semibold">${sanitizeHTML(l.Title)}</td>
+                                <td class="p-3"><span class="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-slate-700 text-blue-700 dark:text-blue-300">${sanitizeHTML(l.Category)}</span></td>
+                                <td class="p-3 space-x-2">
+                                    ${l.VideoURL ? '<i class="fa-brands fa-youtube text-red-500" title="มีวิดีโอ"></i>' : ''}
+                                    ${l.PDFURL ? '<i class="fa-solid fa-file-pdf text-rose-500" title="มี PDF"></i>' : ''}
+                                    ${l.ImageURL ? '<i class="fa-solid fa-image text-emerald-500" title="มีรูปภาพ"></i>' : ''}
+                                </td>
+                                <td class="p-3 text-right space-x-1">
+                                    <button onclick="openLessonModal('${l.LessonID}')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteLessonItem('${l.LessonID}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function openCourseModal() {
+    document.getElementById('courseForm').reset();
+    document.getElementById('fmCourseId').value = '';
+    document.getElementById('courseModal').classList.remove('hidden');
+}
+
+document.getElementById('courseForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newCourse = {
+        CourseID: 'CRS00' + (db.Courses.length + 1),
+        CourseName: document.getElementById('fmCourseName').value.trim(),
+        Description: document.getElementById('fmCourseDesc').value.trim(),
+        Teacher: currentUser.FullName,
+        CoverImage: document.getElementById('fmCourseCover').value.trim() || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80',
+        PassScore: Number(document.getElementById('fmCoursePass').value) || 70,
+        TotalLessons: Number(document.getElementById('fmCourseTotalLessons').value) || 2,
+        CreateDate: getNowThai().split(' ')[0],
+        Status: 'Active'
+    };
+    db.Courses.push(newCourse);
+    pushNotification('ALL', `📚 เปิดรายวิชาใหม่ "${newCourse.CourseName}" โดย ${newCourse.Teacher}`, 'Course');
+    saveDB();
+    closeModal('courseModal');
+    renderNotifications();
+    switchView('manageLessons');
+    Swal.fire({ icon: 'success', title: 'สร้างคอร์สเรียนและส่ง LINE Notify สำเร็จ', timer: 1400, showConfirmButton: false });
+});
+
+function openLessonModal(lessonId = null) {
+    const courseSel = document.getElementById('fmLessonCourseId');
+    courseSel.innerHTML = db.Courses.map(c => `<option value="${c.CourseID}">${sanitizeHTML(c.CourseName)}</option>`).join('');
+    if (lessonId) {
+        const l = db.Lessons.find(x => x.LessonID === lessonId);
+        if (!l) return;
+        document.getElementById('fmLessonId').value = l.LessonID;
+        courseSel.value = l.CourseID;
+        document.getElementById('fmLessonCategory').value = l.Category;
+        document.getElementById('fmLessonTitle').value = l.Title;
+        document.getElementById('fmLessonDesc').value = l.Description;
+        document.getElementById('fmLessonVideo').value = l.VideoURL;
+        document.getElementById('fmLessonPdf').value = l.PDFURL;
+        document.getElementById('fmLessonImg').value = l.ImageURL;
+    } else {
+        document.getElementById('lessonForm').reset();
+        document.getElementById('fmLessonId').value = '';
+    }
+    document.getElementById('lessonModal').classList.remove('hidden');
+}
+
+document.getElementById('lessonForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('fmLessonId').value;
+    const payload = {
+        LessonID: id || ('LES00' + (db.Lessons.length + 1)),
+        CourseID: document.getElementById('fmLessonCourseId').value,
+        Title: document.getElementById('fmLessonTitle').value.trim(),
+        Description: document.getElementById('fmLessonDesc').value.trim(),
+        VideoURL: document.getElementById('fmLessonVideo').value.trim(),
+        PDFURL: document.getElementById('fmLessonPdf').value.trim(),
+        ImageURL: document.getElementById('fmLessonImg').value.trim(),
+        Category: document.getElementById('fmLessonCategory').value.trim(),
+        Teacher: currentUser.FullName,
+        CreateDate: getNowThai().split(' ')[0],
+        Status: 'Active'
+    };
+
+    if (id) {
+        const idx = db.Lessons.findIndex(x => x.LessonID === id);
+        if (idx > -1) db.Lessons[idx] = payload;
+    } else {
+        db.Lessons.push(payload);
+        pushNotification('ALL', `📖 มีบทเรียนใหม่: "${payload.Title}"`, 'Lesson');
+    }
+    saveDB();
+    closeModal('lessonModal');
+    renderNotifications();
+    switchView('manageLessons');
+    Swal.fire({ icon: 'success', title: 'บันทึกบทเรียนเรียบร้อย', timer: 1200, showConfirmButton: false });
+});
+
+function deleteLessonItem(lessonId) {
+    Swal.fire({ title: 'ยืนยันการลบบทเรียน?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#e11d48' }).then(res => {
+        if (res.isConfirmed) {
+            db.Lessons = db.Lessons.filter(l => l.LessonID !== lessonId);
+            saveDB();
+            switchView('manageLessons');
+        }
+    });
+}
+
+function openQuizModal() {
+    document.getElementById('quizFormModal').reset();
+    document.getElementById('fmQuizCourseId').innerHTML = db.Courses.map(c => `<option value="${c.CourseID}">${sanitizeHTML(c.CourseName)}</option>`).join('');
+    document.getElementById('quizModal').classList.remove('hidden');
+}
+
+document.getElementById('quizFormModal').addEventListener('submit', (e) => {
+    e.preventDefault();
+    db.Quiz.push({
+        QuizID: 'QZ00' + (db.Quiz.length + 1),
+        CourseID: document.getElementById('fmQuizCourseId').value,
+        Question: document.getElementById('fmQuizQuestion').value.trim(),
+        ChoiceA: document.getElementById('fmChoiceA').value.trim(),
+        ChoiceB: document.getElementById('fmChoiceB').value.trim(),
+        ChoiceC: document.getElementById('fmChoiceC').value.trim(),
+        ChoiceD: document.getElementById('fmChoiceD').value.trim(),
+        CorrectAnswer: document.getElementById('fmQuizCorrect').value,
+        Score: Number(document.getElementById('fmQuizScore').value) || 10
+    });
+    saveDB();
+    closeModal('quizModal');
+    Swal.fire({ icon: 'success', title: 'เพิ่มข้อสอบสำเร็จ', timer: 1200, showConfirmButton: false });
+});
+
+// ==================== VIEW 7: STUDENT TRACKING & EXCEL/PDF EXPORT ====================
+function renderAnalyticsReportView(container) {
+    const students = db.Users.filter(u => u.Role === 'Student');
+    container.innerHTML = `
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-chart-line mr-2 text-blue-600"></i>ระบบติดตามผลการเรียนรายบุคคล (Learning Analytics)</h2>
+                <p class="text-xs text-slate-500">ตรวจสอบเวลาเรียนสะสม เปอร์เซ็นต์การเรียนจบ คะแนนสอบ และส่งออกไฟล์ Excel (CSV) หรือ PDF</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportReportExcel()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-file-excel"></i> Export Excel (CSV)
+                </button>
+                <button onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
+            <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-slate-100 dark:bg-slate-700">
+                    <tr>
+                        <th class="p-4">รหัสนักเรียน</th>
+                        <th class="p-4">ชื่อ-นามสกุล</th>
+                        <th class="p-4">ระดับชั้น</th>
+                        <th class="p-4">เวลาเรียนสะสม</th>
+                        <th class="p-4">ความคืบหน้า</th>
+                        <th class="p-4">คะแนนสูงสุด</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                    ${students.map(stu => {
+                        const progs = db.Progress.filter(p => p.StudentID === stu.UserID && p.Status === 'Completed');
+                        const totalMins = progs.reduce((acc, cur) => acc + (Number(cur.TimeSpent) || 0), 0);
+                        const pct = Math.min(100, Math.round((progs.length / Math.max(1, db.Lessons.length)) * 100));
+                        const stuScores = db.Scores.filter(s => s.StudentID === stu.UserID);
+                        const bestScore = stuScores.length ? Math.max(...stuScores.map(s => s.Percent)) + '%' : '-';
+                        return `
+                            <tr>
+                                <td class="p-4 font-mono font-bold">${stu.UserID}</td>
+                                <td class="p-4 font-bold">${sanitizeHTML(stu.FullName)}</td>
+                                <td class="p-4">${sanitizeHTML(stu.Class)}</td>
+                                <td class="p-4">${totalMins} นาที</td>
+                                <td class="p-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 h-2 bg-slate-200 rounded-full overflow-hidden"><div class="h-full bg-blue-600" style="width:${pct}%"></div></div>
+                                        <span class="font-bold text-xs">${pct}%</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 font-bold text-emerald-600">${bestScore}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function exportReportExcel() {
+    const headers = ['StudentID,FullName,Class,CompletedLessons,TotalMinutes,BestScorePercent'];
+    const rows = db.Users.filter(u => u.Role === 'Student').map(stu => {
+        const progs = db.Progress.filter(p => p.StudentID === stu.UserID && p.Status === 'Completed');
+        const mins = progs.reduce((a, b) => a + (Number(b.TimeSpent) || 0), 0);
+        const scores = db.Scores.filter(s => s.StudentID === stu.UserID);
+        const best = scores.length ? Math.max(...scores.map(s => s.Percent)) : 0;
+        return `"${stu.UserID}","${stu.FullName}","${stu.Class}",${progs.length},${mins},${best}`;
+    });
+    const csv = 'data:text/csv;charset=utf-8,\uFEFF' + [headers, ...rows].join('\n');
+    const link = document.createElement('a');
+    link.href = encodeURI(csv);
+    link.download = 'Elearning_Student_Report.csv';
+    link.click();
+}
+
+// ==================== VIEW 8: ARCHITECTURE & STEP-BY-STEP DEPLOYMENT GUIDE ====================
+function renderArchitectureGuideView(container) {
+    container.innerHTML = `
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-slate-700 space-y-6">
+            <h2 class="text-2xl font-bold text-blue-900 dark:text-white"><i class="fa-solid fa-code-branch mr-2 text-blue-600"></i>โครงสร้างระบบ MVC & คู่มือการ Deploy ใช้งานจริง</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-300">โค้ดฝั่ง Backend ทั้งหมดถูกจัดเตรียมไว้ในไฟล์ <strong>Code.gs</strong> และเอกสารคู่มือใน <strong>README.md</strong> เรียบร้อยแล้ว รองรับการสร้างตาราง Google Sheets ทั้ง 8 ตารางอัตโนมัติด้วยฟังก์ชัน <code>SetupAllSheet()</code></p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 space-y-2">
+                    <div class="font-bold text-sm text-blue-700 dark:text-blue-300">1. โครงสร้างตาราง Google Sheets (8 ชีตมาตรฐาน)</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Users:</strong> UserID, FullName, Email, Role, Password, Class, ProfileImage, Status, LastLogin</li>
+                        <li><strong>Courses:</strong> CourseID, CourseName, Description, Teacher, CoverImage, PassScore, TotalLessons, CreateDate, Status</li>
+                        <li><strong>Lessons:</strong> LessonID, CourseID, Title, Description, VideoURL, PDFURL, ImageURL, Category, Teacher, CreateDate, Status</li>
+                        <li><strong>Progress:</strong> ProgressID, StudentID, CourseID, LessonID, Status, TimeSpent, LastAccess, CompleteDate</li>
+                        <li><strong>Quiz & Scores:</strong> ระบบคลังข้อสอบปรนัยและตารางบันทึกคะแนนสอบ</li>
+                        <li><strong>Certificates & Notifications:</strong> ทะเบียนเกียรติบัตรพร้อม QR Verify และประวัติการแจ้งเตือน</li>
+                    </ul>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 space-y-2">
+                    <div class="font-bold text-sm text-emerald-700 dark:text-emerald-300">2. ขั้นตอนการ Deploy เป็น Web App (Step-by-Step)</div>
+                    <ol class="list-decimal pl-5 space-y-1">
+                        <li>เปิดไฟล์ Google Sheets ของโรงเรียน แล้วไปที่เมนู <strong>ส่วนขยาย (Extensions) &gt; Apps Script</strong></li>
+                        <li>คัดลอกโค้ดจากไฟล์ <code>Code.gs</code> ไปวาง และสร้างไฟล์ <code>index.html</code> นำโค้ดหน้านี้ไปวาง</li>
+                        <li>กดปุ่ม <strong>Run &gt; SetupAllSheet</strong> 1 ครั้งเพื่อให้ระบบสร้างตารางพร้อมข้อมูลตัวอย่าง</li>
+                        <li>กดปุ่ม <strong>Deploy &gt; New deployment &gt; Web app</strong> ตั้งค่า <em>Execute as: Me</em> และ <em>Who has access: Anyone</em></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== UTILITIES: NOTIFICATIONS, QR & DARK MODE ====================
+function pushNotification(userId, message, type) {
+    db.Notifications.unshift({
+        NotificationID: 'NTF' + Date.now(),
+        UserID: userId,
+        Message: message,
+        Type: type,
+        Status: 'Unread',
+        CreateDate: getNowThai()
+    });
+}
+
+function renderNotifications() {
+    const list = db.Notifications.filter(n => n.UserID === 'ALL' || n.UserID === currentUser.UserID);
+    const unread = list.filter(n => n.Status === 'Unread').length;
+    const badge = document.getElementById('notifBadge');
+    badge.textContent = unread;
+    badge.classList.toggle('hidden', unread === 0);
+
+    document.getElementById('notifListContainer').innerHTML = list.map(n => `
+        <div class="p-3 text-xs ${n.Status === 'Unread' ? 'bg-blue-50/60 dark:bg-slate-700/60 font-semibold' : ''}">
+            <div>${sanitizeHTML(n.Message)}</div>
+            <div class="text-[10px] text-slate-400 mt-1">${n.CreateDate}</div>
+        </div>
+    `).join('');
+}
+
+function toggleNotifPanel() {
+    document.getElementById('notifDropdown').classList.toggle('hidden');
+}
+
+function markAllNotifRead() {
+    db.Notifications.forEach(n => { n.Status = 'Read'; });
+    saveDB();
+    renderNotifications();
+}
+
+function openQrCheckinModal() {
+    const checkInUrl = `${window.location.href.split('#')[0]}?checkin=${currentUser.UserID}`;
+    document.getElementById('classroomQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(checkInUrl)}`;
+    document.getElementById('qrStudentRef').textContent = `${currentUser.UserID} (${currentUser.FullName})`;
+    document.getElementById('qrCheckinModal').classList.remove('hidden');
+}
+
+function simulateQrAttendanceCheck() {
+    closeModal('qrCheckinModal');
+    Swal.fire({
+        icon: 'success',
+        title: 'เช็คชื่อเข้าเรียนด้วย QR Code สำเร็จ!',
+        text: `บันทึกเวลาเข้าเรียนของ ${currentUser.FullName} ณ เวลา ${getNowThai()} เรียบร้อยแล้ว`,
+        confirmButtonColor: '#2563eb'
+    });
+}
+
+function toggleDarkMode() {
+    const html = document.documentElement;
+    html.classList.toggle('dark');
+    const isDark = html.classList.contains('dark');
+    document.getElementById('darkModeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+function toggleMobileSidebar() {
+    document.getElementById('sidebarPanel').classList.toggle('-translate-x-full');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+</script>
+</body>
+</html>
